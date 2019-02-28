@@ -55,20 +55,25 @@ def plot_fn(title_received, data):
         radialaxis=dict(
             ticksuffix='%'            
         ),
-        polar = dict(
-         angularaxis=dict(
-            visible=True,
-            ticklen=0,
-            showline=False,
-            showgrid=False,
-            showticklabels=True,
-            #visible=False
+         polar = dict(
+          angularaxis=dict(
+             visible=True,
+             ticklen=0,
+             showline=True,
+             showgrid=True,
+             showticklabels=True,
+             #visible=False
+          ),
+          radialaxis=dict(
+             visible=False,
+             showgrid=True
          ),
-         radialaxis=dict(
-            visible=False,
-            showgrid=False
-        )),
-         orientation=270
+                  sector=dict(
+                          bargap=0
+                )
+         
+       ),
+        orientation=270
     )
 
     fig = go.Figure(data=data, layout=layout)
@@ -82,6 +87,8 @@ data2=createWindrose(year2,year2D)
 plot_fn(title_plot1, data1)
 plot_fn(title_plot2, data2)
 
+if __init__ == main():
+    
 
 ######################################-------------------------##############################################
 
