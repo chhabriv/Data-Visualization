@@ -10,6 +10,12 @@ year1=['Apr 1854','May 1854','Jun 1854','Jul 1854','Aug 1854','Sep 1854','Oct 18
 year2=['Apr 1855','May 1855','Jun 1855','Jul 1855','Aug 1855','Sep 1855','Oct 1855','Nov 1855','Dec 1855','Jan 1856','Feb 1856','Mar 1856']
 title_plot1='April 1854 - March 1855'
 title_plot2='April 1855 - March 1856'
+PURPLE='rgb(106,81,163)'
+PURPLE_LIGHT='rgb(158,154,200)'
+PURPLE_LIGHTEST='rgb(203,201,226)'
+BLUE='rgb(30,144,255)'
+RED='rgb(220,20,60)'
+BLACK='rgb(0,0,0)'
 
 def createWindrose(year,values):
     trace1 = go.Barpolar(
@@ -18,7 +24,7 @@ def createWindrose(year,values):
         name='Zymotic diseases',
         subplot = "polar1",
         marker=dict(
-            color='rgb(30,144,255)'
+            color=PURPLE
         )
     )
     trace2 = go.Barpolar(
@@ -27,7 +33,7 @@ def createWindrose(year,values):
         name='Wounds & injuries',
         subplot = "polar1",
         marker=dict(
-            color='rgb(220,20,60)'
+            color=PURPLE_LIGHT
         )
     )
     trace3 = go.Barpolar(
@@ -36,7 +42,7 @@ def createWindrose(year,values):
         name='All other causes',
         subplot = "polar1",
         marker=dict(
-            color='rgb(0,0,0)'
+            color=PURPLE_LIGHTEST
         )
     )
     data = [trace3, trace2, trace1]
@@ -56,24 +62,24 @@ def plot_fn(title_received, data):
             ticksuffix='%'            
         ),
          polar = dict(
+            bargap=0,
           angularaxis=dict(
              visible=True,
              ticklen=0,
              showline=True,
              showgrid=True,
              showticklabels=True,
+             direction='clockwise',
+             rotation=160,
              #visible=False
           ),
           radialaxis=dict(
              visible=False,
              showgrid=True
-         ),
-                  sector=dict(
-                          bargap=0
-                )
+         )
          
        ),
-        orientation=270
+        #orientation=270
     )
 
     fig = go.Figure(data=data, layout=layout)
