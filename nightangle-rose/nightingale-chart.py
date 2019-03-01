@@ -1,66 +1,75 @@
-import plotly.plotly as py
-from plotly import tools
 from plotly import offline
 import plotly.graph_objs as go
 import pandas as pd
+import os
 
+os.chdir('H:\TCD\Semester 2\DataVisualization\Assignment2')
 
-nightangle_data=pd.read_excel("nightingale-data-1.xlsx",sheet_name="Sheet1")
-year1=['Apr 1854','May 1854','Jun 1854','Jul 1854','Aug 1854','Sep 1854','Oct 1854','Nov 1854','Dec 1854','Jan 1855','Feb 1855','Mar 1855']
-year2=['Apr 1855','May 1855','Jun 1855','Jul 1855','Aug 1855','Sep 1855','Oct 1855','Nov 1855','Dec 1855','Jan 1856','Feb 1856','Mar 1856']
-title_plot1='April 1854 - March 1855'
-title_plot2='April 1855 - March 1856'
+FILENAME='nightingale-data-1.xlsx'
+SHEET='Sheet1'
+YEAR1_APR1854_MAR1855=['Apr 1854','May 1854','Jun 1854','Jul 1854',
+                       'Aug 1854','Sep 1854','Oct 1854','Nov 1854',
+                       'Dec 1854','Jan 1855','Feb 1855','Mar 1855']
+YEAR2_APR1855_MAR1856=['Apr 1855','May 1855','Jun 1855','Jul 1855',
+                       'Aug 1855','Sep 1855','Oct 1855','Nov 1855',
+                       'Dec 1855','Jan 1856','Feb 1856','Mar 1856']
+TITLE_APR1854_MAR1855='April 1854 - March 1855'
+TITLE_APR1855_MAR1856='April 1855 - March 1856'
 PURPLE='rgb(106,81,163)'
 PURPLE_LIGHT='rgb(158,154,200)'
 PURPLE_LIGHTEST='rgb(203,201,226)'
 BLUE='rgb(30,144,255)'
 RED='rgb(220,20,60)'
 BLACK='rgb(0,0,0)'
+ZYMOTIC='Zymotic diseases'
+WOUNDS='Wounds & injuries'
+OTHERS='All other causes'
+DIRECTION_VALUE='clockwise'
+ROTATION_VALUE=160
+SIZE_VALUE=14
 
-def createWindrose(year,values):
+nightangle_data=pd.read_excel(FILENAME,sheet_name=SHEET)
+
+
+def createWindrose(year,values,color_z, color_w, color_o):
     trace1 = go.Barpolar(
-        r=values['Zymotic diseases'],
+        r=values[ZYMOTIC],
         theta=year,
-        name='Zymotic diseases',
-        subplot = "polar1",
+        name=ZYMOTIC,
         marker=dict(
-            color=PURPLE
+            color=color_z
         )
     )
     trace2 = go.Barpolar(
-        r=values['Wounds & injuries'],
+        r=values[WOUNDS],
         theta=year,
-        name='Wounds & injuries',
-        subplot = "polar1",
+        name=WOUNDS,
         marker=dict(
-            color=PURPLE_LIGHT
+            color=color_w
         )
     )
     trace3 = go.Barpolar(
-        r=values['All other causes'],
+        r=values[OTHERS],
         theta=year,
-        name='All other causes',
-        subplot = "polar1",
+        name=OTHERS,
         marker=dict(
-            color=PURPLE_LIGHTEST
+            color=color_o
         )
     )
     data = [trace3, trace2, trace1]
     return data
 
-def plot_fn(title_received, data):
+def plot_fn(title_received, data,ROTATION_VALUE):
     layout = go.Layout(
          title=title_received,
          font=dict(
-             size=16
+             size=SIZE_VALUE
          ),
          legend=dict(
              font=dict(
-                 size=16         )
+                 size=SIZE_VALUE
+                 )
          ),
-        radialaxis=dict(
-            ticksuffix='%'            
-        ),
          polar = dict(
             bargap=0,
           angularaxis=dict(
@@ -69,8 +78,8 @@ def plot_fn(title_received, data):
              showline=True,
              showgrid=True,
              showticklabels=True,
-             direction='clockwise',
-             rotation=160,
+             direction=DIRECTION_VALUE,
+             rotation=ROTATION_VALUE,
              #visible=False
           ),
           radialaxis=dict(
@@ -79,130 +88,17 @@ def plot_fn(title_received, data):
          )
          
        ),
-        #orientation=270
     )
 
     fig = go.Figure(data=data, layout=layout)
     offline.plot(fig, filename=title_received+'.html')
     
 
-year1D, year2D = nightangle_data.iloc[:12, : ], nightangle_data.iloc[12:, :]
-data1=createWindrose(year1,year1D)
-data2=createWindrose(year2,year2D)
+year1_df, year2_df = nightangle_data.iloc[:12, : ], nightangle_data.iloc[12:, :]
+data1_APR1854_MAR1855=createWindrose(YEAR1_APR1854_MAR1855,year1_df, BLUE, RED, BLACK)
+data2_APR1855_MAR1856=createWindrose(YEAR2_APR1855_MAR1856,year2_df, PURPLE,PURPLE_LIGHT, PURPLE_LIGHTEST)
 
-plot_fn(title_plot1, data1)
-plot_fn(title_plot2, data2)
-
-if __init__ == main():
-    
-
-######################################-------------------------##############################################
-
-
-#####################################---------------------------##############################################
-
-def createWindrose2(values1,values2):
-    trace1 = go.Barpolar(
-        r=values1['Zymotic diseases'],
-        theta=year1,
-        name='Zymotic diseases',
-        subplot = "polar1",
-        marker=dict(
-            color='rgb(106,81,163)'
-        )
-    )
-    trace2 = go.Barpolar(
-        r=values1['Wounds & injuries'],
-        theta=year1,
-        name='Wounds & injuries',
-        subplot = "polar1",
-        marker=dict(
-            color='rgb(158,154,200)'
-        )
-    )
-    trace3 = go.Barpolar(
-        r=values1['All other causes'],
-        theta=year1,
-        name='All other causes',
-        subplot = "polar1",
-        marker=dict(
-            color='rgb(203,201,226)'
-        )
-    )
-    trace4 = go.Barpolar(
-        r=values2['Zymotic diseases'],
-        theta=year2,
-        name='Zymotic diseases',
-        subplot = "polar2",
-        marker=dict(
-            color='rgb(106,81,163)'
-        )
-    )
-    trace5 = go.Barpolar(
-        r=values2['Wounds & injuries'],
-        theta=year2,
-        name='Wounds & injuries',
-        subplot = "polar2",
-        marker=dict(
-            color='rgb(158,154,200)'
-        )
-    )
-    trace6 = go.Barpolar(
-        r=values2['All other causes'],
-        theta=year2,
-        name='All other causes',
-        subplot = "polar2",
-        marker=dict(
-            color='rgb(203,201,226)'
-        )
-    )
-    data = [trace3, trace2, trace1, trace6, trace5, trace4]
-    return data
-
-layout1   = go.Layout(
-     title='Nightangles Rose',
-     polar = dict(
-     angularaxis=dict(
-         #ticksuffix='%',
-        #showline=False,
-        showticklabels=True,
-        #visible=False
-     ),
-     radialaxis=dict(
-        ticksuffix='%'
-    )
-    ),
-    polar2 =dict(
-    angularaxis=dict(
-         #ticksuffix='%',
-        #showline=False,
-        showticklabels=True,
-        #visible=False
-     ),
-     radialaxis=dict(
-        ticksuffix='%'
-    ), 
-      ),
-      showlegend = False
-)
-     
-data=createWindrose2(year1D,year2D)
-fig = go.Figure(data=data, layout=layout1)
-fig['layout'].update(height=2000, width=2000, title='Multiple Subplots' +
-                                                  ' with Titles')
-
-offline.plot(fig, filename='year1')
-
-# =============================================================================
-# app = dash.Dash()
-# layout = html.Div(
-#         [html.Div(plots[i], style=col_style[i]) for i in range(len(plots))],
-#         style = {'margin-right': '0px'}
-#     )
-# 
-# app.layout = layout
-# app.run_server(port=8052)
-# =============================================================================
-
-
-
+plot_fn(TITLE_APR1854_MAR1855, data1_APR1854_MAR1855,ROTATION_VALUE)
+plot_fn(TITLE_APR1855_MAR1856, data2_APR1855_MAR1856,ROTATION_VALUE)
+plot_fn(TITLE_APR1854_MAR1855+' - Rotated and Zoomed', data1_APR1854_MAR1855,320)
+plot_fn(TITLE_APR1855_MAR1856+' - Rotated and Zoomed', data2_APR1855_MAR1856,90)
