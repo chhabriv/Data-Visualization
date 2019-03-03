@@ -1,21 +1,42 @@
+#author: Viren Chhabria
+#ID: 18301780
+#Course: Data Visualization (CS7DS4)
+#Assignment: 2, Part B
+
+#libraries
 library(ggplot2)
 library(scales)
 library(gridExtra)
-#install.packages("ggrepel")
 library(readxl)
 library(ggmap)
 library(ggrepel)
-setwd("H:/TCD/Semester 2/DataVisualization/Assignment2")
-minard_data <- read_excel("minard-data.xlsx")
-#View(minard_data)
+library(dplyr)
 
+#set constants
+FILE_DIRECTORY="H:/TCD/Semester 2/DataVisualization/Assignment2"
+FILENAME="minard-data.xlsx"
+PLOT_TITLE="Minard's Map - Assignment 2 - Viren Chhabria - 18301780"
+OUTPUT_FILENAME="VirenChhabria-18301780-MinardsMap.png"
+
+setwd(FILE_DIRECTORY)
+minard_data <- read_excel(FILENAME)
+
+#Read data from the excel file
 cities=minard_data[1:3]
 temp=minard_data[4:8]
 troops=minard_data[9:13]
 cities=na.omit(cities)
 troops=na.omit(troops)
 
-#' ## plot path of troops, and another layer for city names
+#set points which are not the same as city, so the chart has the number of survivors
+troops_plot=filter(troops, !(troops$LONP %in% cities$LONC))
+troops_plot=troops_plot[troops_plot$SURV!=175000,]
+
+# set option for displaying number of soldiers without exponenet
+options(scipen=10000)
+
+# Reference : https://vincentarelbundock.github.io/Rdatasets/doc/HistData/Minard.temp.html
+# plot path of troops, and another layer for city names
 plot_troops = ggplot(troops, 
                      aes(troops$LONP, 
                          troops$LATP)) +
@@ -32,20 +53,21 @@ plot_troops = ggplot(troops,
                   aes(x = cities$LONC, 
                       y = cities$LATC, 
                       label = cities$CITY),
-                  color = "black",
-                  min.segment.length = unit(0, 'lines'),
-                  nudge_y = .2) +
-  geom_text_repel(data = troops, 
-                  aes(x = troops$LONP, 
-                      y = troops$LATP, 
-                      label = troops$SURV), 
+                  color = "black")+
+  geom_text_repel(data = troops_plot, 
+                  aes(x = troops_plot$LONP, 
+                      y = troops_plot$LATP, 
+                      label = troops_plot$SURV), 
                   size=2.5,
-                  color = "black")
+                  color = "black",
+                  point.padding = NA)+
+                  scale_x_continuous(labels = comma)
 
-#' ## Combine these, and add scale information, labels, etc.
-#' Set the x-axis limits for longitude explicitly, to coincide with those for temperature
+# Combine these, and add scale information, labels, etc.
+# Set the x-axis limits for longitude explicitly, to coincide with those for temperature
 
-breaks = c(0.04,0.5,1,2,2.5,3,3.4) * 10^5 
+# set ranges to use in the legend
+breaks = c(0.04,0.5,1,2,2.5,3.4) * 10^5 
 
 plot_minard = plot_troops  +
   scale_size("Survivors", 
@@ -58,18 +80,18 @@ plot_minard = plot_troops  +
   coord_cartesian(xlim = c(24, 38)) +
   xlab(NULL) +
   ylab(NULL) +
-  ggtitle("Minard's Map - Assignment 2 - Viren Chhabria - 18301780") +
+  ggtitle(PLOT_TITLE) +
   theme_bw() +
   theme(plot.title = element_text(face="bold",hjust = 0.5),
-        legend.position=c(.8, .25), legend.box="horizontal",
-        legend.title = element_text(face="bold"), legend.box.background = element_rect(color = "black"),
+        legend.position=c(.8, .25), 
+        legend.box="horizontal",
+        legend.title = element_text(face="bold"), 
+        legend.box.background = element_rect(color = "black"),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         axis.text = element_blank(), axis.ticks = element_blank(),
         panel.border = element_blank())
   
-
-library(dplyr)
 temp.nice = temp %>%
   mutate(nice.label = paste0(temp$TEMP, "°, ", temp$MON, ". ", temp$DAY))
 
@@ -78,25 +100,24 @@ plot_temp = ggplot(temp.nice, aes(temp$LONT, temp$TEMP)) +
   geom_path(color="blue", size=1.5) +
   geom_point(size=2) +
   geom_label(aes(label = nice.label),
-             #family = "Calibri",
-             size = 2) +
+             size = 2.5) +
   labs(x = NULL, y = "° Celsius") +
-  #xlab("Longitude") + ylab("Temperature") +
   coord_cartesian(xlim = c(24, 38)) +
   theme_bw()+
   theme(panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
         panel.grid.minor.y = element_blank(),
-        axis.text.x = element_blank(), axis.ticks = element_blank(),
+        axis.text.x = element_blank(), 
+        axis.ticks = element_blank(),
         panel.border = element_blank())
 
 
-#' The plot works best if we  re-scale the plot window to an aspect ratio of ~ 2 x 1
+# The plot works best if we  re-scale the plot window to an aspect ratio of ~ 2 x 1
 windows(width=10, height=5)
 
-#' Combine the two plots into one
+# Combine the two plots into one
 minards_map=grid.arrange(plot_minard, plot_temp, nrow=2, heights=c(3.1,1.25))
-ggsave(filename="VirenChhabria-18301780-MinardsMap.png",
+ggsave(filename=OUTPUT_FILENAME,
        plot=minards_map, 
        width = 15, 
        height = 7.5)
