@@ -18,26 +18,31 @@ TITLE_APR1855_MAR1856='April 1855 - March 1856'
 PURPLE='rgb(106,81,163)'
 PURPLE_LIGHT='rgb(158,154,200)'
 PURPLE_LIGHTEST='rgb(203,201,226)'
-BLUE='rgb(30,144,255)'
-RED='rgb(220,20,60)'
-BLACK='rgb(0,0,0)'
+BLUE='rgb(51, 236, 255)'
+RED='rgb(210, 80, 80)'
+BLACK='rgb(151, 139, 139)'
 ZYMOTIC='Zymotic diseases'
 WOUNDS='Wounds & injuries'
 OTHERS='All other causes'
 DIRECTION_VALUE='clockwise'
 ROTATION_VALUE=160
 SIZE_VALUE=14
+WIDTH_NORMAL=1.5
+WIDTH_ZOOMED=0.75
+FLAG_RESIZE=0
 
 nightangle_data=pd.read_excel(FILENAME,sheet_name=SHEET)
 
 
-def createWindrose(year,values,color_z, color_w, color_o):
+def createWindrose(year,values,color_z, color_w, color_o,width_received):
     trace1 = go.Barpolar(
         r=values[ZYMOTIC],
         theta=year,
         name=ZYMOTIC,
         marker=dict(
-            color=color_z
+            color=color_z,
+            line=dict(
+                    width=width_received)
         )
     )
     trace2 = go.Barpolar(
@@ -45,7 +50,9 @@ def createWindrose(year,values,color_z, color_w, color_o):
         theta=year,
         name=WOUNDS,
         marker=dict(
-            color=color_w
+            color=color_w,
+            line=dict(
+                width=width_received)
         )
     )
     trace3 = go.Barpolar(
@@ -53,7 +60,9 @@ def createWindrose(year,values,color_z, color_w, color_o):
         theta=year,
         name=OTHERS,
         marker=dict(
-            color=color_o
+            color=color_o,
+                        line=dict(
+                    width=width_received)
         )
     )
     data = [trace3, trace2, trace1]
@@ -88,6 +97,9 @@ def plot_fn(title_received, data,ROTATION_VALUE):
          )
          
        ),
+          #uncomment for resizing
+              #width=1000,
+              #height=750
     )
 
     fig = go.Figure(data=data, layout=layout)
@@ -95,10 +107,12 @@ def plot_fn(title_received, data,ROTATION_VALUE):
     
 
 year1_df, year2_df = nightangle_data.iloc[:12, : ], nightangle_data.iloc[12:, :]
-data1_APR1854_MAR1855=createWindrose(YEAR1_APR1854_MAR1855,year1_df, BLUE, RED, BLACK)
-data2_APR1855_MAR1856=createWindrose(YEAR2_APR1855_MAR1856,year2_df, PURPLE,PURPLE_LIGHT, PURPLE_LIGHTEST)
+#data1_APR1854_MAR1855=createWindrose(YEAR1_APR1854_MAR1855,year1_df, BLUE, RED, BLACK)
+#data2_APR1855_MAR1856=createWindrose(YEAR2_APR1855_MAR1856,year2_df, PURPLE,PURPLE_LIGHT, PURPLE_LIGHTEST)
+data2_APR1855_MAR1856=createWindrose(YEAR2_APR1855_MAR1856,year2_df, PURPLE,PURPLE_LIGHT,PURPLE_LIGHTEST,WIDTH_NORMAL)
 
-plot_fn(TITLE_APR1854_MAR1855, data1_APR1854_MAR1855,ROTATION_VALUE)
+#plot_fn(TITLE_APR1854_MAR1855, data1_APR1854_MAR1855,ROTATION_VALUE)
 plot_fn(TITLE_APR1855_MAR1856, data2_APR1855_MAR1856,ROTATION_VALUE)
-plot_fn(TITLE_APR1854_MAR1855+' - Rotated and Zoomed', data1_APR1854_MAR1855,320)
+#plot_fn(TITLE_APR1854_MAR1855+' - Rotated and Zoomed', data1_APR1854_MAR1855,320)
+data2_APR1855_MAR1856=createWindrose(YEAR2_APR1855_MAR1856,year2_df,BLUE, RED, BLACK,WIDTH_ZOOMED)
 plot_fn(TITLE_APR1855_MAR1856+' - Rotated and Zoomed', data2_APR1855_MAR1856,90)
