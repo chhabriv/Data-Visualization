@@ -2,33 +2,41 @@ library(readr)
 library(ggmap)
 library(geojsonio)
 library(dplyr)
-
+library(networkD3)
 LEFT=2.11
 RIGHT=2.22
 TOP=41.45
 BOTTOM=41.35
 ZOOM=15
 MAP_TYPE="toner"
-#PATH_UNIX="~/code/DataVisualization/Assignments/Assignment4"
-PATH_WIN="H:/TCD/Semester 2/DataVisualization/Assignment4/barcelona-dataset-anaysis"
-INFRA_PATH="Infraestructures_Inventari_Pas_Vianants.csv"
-ACCIDENTS="2017_accidents_gu_bcn.csv"
+PATH="~/code/DataVisualization/Assignments/Assignment4"
+#PATH="H:/TCD/Semester 2/DataVisualization/Assignment4/barcelona-dataset-anaysis"
+INFRA_PATH="barcelona-pedestrian-crossing-2017.csv"
+ACCIDENTS="barcelona-accidents-2017.csv"
+WEALTH="barcelona-terretorial-income-2017.csv"
+UNEMPLOYMENT="barcelona-unemployment-2017.csv"
 ACCIDENT_VS_PEDESTRIAN_TITLE="2017 - Pedestrian Accidents vs Pedestrian Crossings in Barcelona"
 DISTRICT_PEDESTRIAN_COUNT="2017 - Pedestrian Accidents per District in Barcelona"
 PREDESTRIAN_CAUSE_COUNT="2017 - Pedestrian Accidents Cause in Barcelona"
-
+INCOME_UNEMPLOYMENT_DISTRICT="2017 - District wise Wealth Vs Unemployment Rate"
 setwd(PATH)
+
 barcelona_coordinates <- c(left = LEFT,
             bottom = BOTTOM,
             right = RIGHT,
             top = TOP)
 
-barcelona <- get_stamenmap(bbox = barcelona_coordinates,zoom=ZOOM,maptype=MAP_TYPE)
+barcelona = get_stamenmap(bbox = barcelona_coordinates,zoom=ZOOM,maptype=MAP_TYPE)
 barcelona_map=ggmap(barcelona)
 
-barcelona_infrastructure <- read_csv(INFRA_PATH)
-barcelona_accidents <- read_csv(ACCIDENTS)
-barcelona_pedestrian_accidents <- barcelona_accidents[barcelona_accidents$DescriptionofAccident != "Not pedesterain",]
+#read datasets
+barcelona_infrastructure = read_csv(INFRA_PATH)
+
+barcelona_accidents = read_csv(ACCIDENTS)
+barcelona_pedestrian_accidents = barcelona_accidents[barcelona_accidents$DescriptionofAccident != "Not pedesterain",]
+
+barcelona_wealth = read_csv(WEALTH)
+barcelona_unemployment = read_csv(UNEMPLOYMENT)
 
 crossing_plot=barcelona_map+
               geom_point(data=barcelona_infrastructure, 
@@ -55,7 +63,7 @@ crossing_plot=barcelona_map+
 crossing_plot
 
 #getting count of districts
-barcelona_pedestrian_accidents[, barcelona_pedestrian_accidents$`Name of the district`] <- as.factor(barcelona_pedestrian_accidents$`Name of the district`)
+barcelona_pedestrian_accidents['Name of the district'] =lapply(barcelona_pedestrian_accidents['Name of the district'],factor)
 count_of_districts=as.data.frame(table(barcelona_pedestrian_accidents$`Name of the district`))
 colnames(count_of_districts) <- c("District","Count of Accidents") 
 ggplot(data=count_of_districts, aes(District,`Count of Accidents`)) +
@@ -63,7 +71,7 @@ ggplot(data=count_of_districts, aes(District,`Count of Accidents`)) +
   ggtitle(DISTRICT_PEDESTRIAN_COUNT)
 
 #getting cause of accident
-barcelona_pedestrian_accidents[, barcelona_pedestrian_accidents$DescriptionofAccident] <- as.factor(barcelona_pedestrian_accidents$DescriptionofAccident)
+barcelona_pedestrian_accidents['DescriptionofAccident'] = lapply(barcelona_pedestrian_accidents['DescriptionofAccident'],factor)
 count_of_cause=as.data.frame(table(barcelona_pedestrian_accidents$DescriptionofAccident))
 colnames(count_of_cause) <- c("Cause of Accident","Count of Accidents") 
 ggplot(data=count_of_cause, aes(`Cause of Accident`,`Count of Accidents`)) +
@@ -71,22 +79,77 @@ ggplot(data=count_of_cause, aes(`Cause of Accident`,`Count of Accidents`)) +
   ggtitle(PREDESTRIAN_CAUSE_COUNT)
 
 #Day-Hour accident count
-barcelona_pedestrian_accidents[, barcelona_pedestrian_accidents$Day] <- as.factor(barcelona_pedestrian_accidents$Day)
+barcelona_pedestrian_accidents['Day'] = lapply(barcelona_pedestrian_accidents['Day'],factor)
 count_day_hour=rename(count(barcelona_pedestrian_accidents, 
                             barcelona_pedestrian_accidents$Day,
                             barcelona_pedestrian_accidents$Hour), 
                       Freq = n)
 colnames(count_day_hour) <- c("Day","Hour","Count of Accidents")
+count_day_hour['Hour']=lapply(count_day_hour['Hour'], factor)
+
 ggplot(data=count_day_hour,aes(x=Day,y=Hour))+
   geom_point(aes(size = `Count of Accidents`))+
-  scale_y_continuous(breaks = count_day_hour$Hour)
+  scale_y_continuous(breaks = count_day_hour$Hour)+  
+  ggtitle()
 
 ggplot(data=count_day_hour,aes(x=Hour,y=`Count of Accidents`,col=Day))+
   geom_point(aes(size = `Count of Accidents`))+
-  scale_y_continuous(breaks = count_day_hour$`Count of Accidents`)
+  scale_y_continuous(breaks = count_day_hour$`Count of Accidents`)+
+  scale_x_continuous(breaks = count_day_hour$Hour)+
+  ggtitle()
 
-#Sankey Diagram District->Unemployment Rate -> Wealth
-#Sankey Diagram District-> Education -> Wealth
+#Day-count-hour sankey
+nodes <- as.data.frame(levels(count_day_hour$Day))
+nodes$id <- 1:nrow(nodes)
+nodes <- nodes[, c(2,1)]
+names(nodes) <- c("id", "label")
+
+# Edges
+edges <- count_day_hour %>% 
+  left_join(nodes, by=c("Day"="label")) %>%
+  select(-Day) %>%
+  dplyr::rename(Day=id)
+
+edges <- edges %>% 
+  left_join(nodes, by=c("Hour"="label")) %>%
+  select(-Hour) %>%
+  dplyr::rename(Hour=id)
+
+nodes_d3 <- mutate(nodes, id=id-1)
+edges_d3 <- mutate(edges, Day=Day-1, Hour=Hour-1)
+
+# sankeyNetwork - Day Hour
+sankeyNetwork(Links=edges_d3, Nodes=nodes_d3, Source="Day", Target="Hour", 
+              NodeID="label", Value="Count of Accidents", fontSize=16, unit="Count of Accidents")
+
+
+
+#Wealth per district
+barcelona_wealth['District Name'] = lapply(barcelona_wealth['District Name'],factor)
+mean_district_wealth = barcelona_wealth%>% 
+          group_by("District Name"=`District Name`) %>% 
+          summarise("Population"=sum(Population),"Mean Wealth"=mean(`Index RFD Barcelona = 100`))
+
+#Wealth vs Unemployment per district
+cols=c(2,4:8)
+barcelona_unemployment[cols] = lapply(barcelona_unemployment[cols], factor)
+
+mean_district_unemployment = barcelona_unemployment%>% 
+                             filter(`Employment Demand`=="Registered Unemployed")%>%
+                             group_by("District Name"=`District Name`) %>% 
+                             summarise("District Unemployment"=sum(Number))
+
+district_wealth_unemployment <- merge(mean_district_wealth, mean_district_unemployment, by.x = "District Name", by.y = "District Name")
+district_wealth_unemployment["Unemployment Rate"]=round(district_wealth_unemployment["District Unemployment"]/district_wealth_unemployment["Population"]*100,2)
+
+ggplot(data=district_wealth_unemployment,aes(x=`District Name`,y=`Mean Wealth`,col = ifelse(`Mean Wealth` < 100,"below_average","above_average")))+
+  geom_point(aes(size = `Unemployment Rate`))+
+  scale_color_manual('Income Per Captia Index Comparison to Average', 
+                   values = c(below_average="red", above_average="green"), 
+                   labels=c("Above Average","Below Average"))+
+  ylab("Income Per Captia Index with Average=100")+
+  ggtitle(INCOME_UNEMPLOYMENT_DISTRICT)
+
 #Sankey Diagram Day-> Accidents -> Hour
 #Terrororial Wealth heatmap on plolygon coord
 #Check for sankey diag of District->Deaths->Wealth
