@@ -1,5 +1,7 @@
 library(readr)
 library(ggmap)
+library(geojsonio)
+library(dplyr)
 
 LEFT=2.11
 RIGHT=2.22
@@ -7,7 +9,8 @@ TOP=41.45
 BOTTOM=41.35
 ZOOM=15
 MAP_TYPE="toner"
-PATH="~/code/DataVisualization/Assignments/Assignment4"
+#PATH_UNIX="~/code/DataVisualization/Assignments/Assignment4"
+PATH_WIN="H:/TCD/Semester 2/DataVisualization/Assignment4/barcelona-dataset-anaysis"
 INFRA_PATH="Infraestructures_Inventari_Pas_Vianants.csv"
 ACCIDENTS="2017_accidents_gu_bcn.csv"
 ACCIDENT_VS_PEDESTRIAN_TITLE="2017 - Pedestrian Accidents vs Pedestrian Crossings in Barcelona"
@@ -38,6 +41,8 @@ crossing_plot=barcelona_map+
               scale_color_manual("Representation", 
                      values = c(crossing_color="blue", accident_color="red"), 
                      labels=c("Pedestrian Deaths","Pedestrian Crossings"))+
+  xlab(NULL)+
+  ylab(NULL)+
   theme(plot.title = element_text(face="bold",hjust = 0.5),
         legend.position="right", 
         legend.box="horizontal",
@@ -67,5 +72,22 @@ ggplot(data=count_of_cause, aes(`Cause of Accident`,`Count of Accidents`)) +
 
 #Day-Hour accident count
 barcelona_pedestrian_accidents[, barcelona_pedestrian_accidents$Day] <- as.factor(barcelona_pedestrian_accidents$Day)
-count_day_hour=as.data.frame(table(barcelona_pedestrian_accidents$Day, barcelona_pedestrian_accidents$Hour))
-colnames(count_of_cause) <- c("Day","Hour","Count of Accidents") 
+count_day_hour=rename(count(barcelona_pedestrian_accidents, 
+                            barcelona_pedestrian_accidents$Day,
+                            barcelona_pedestrian_accidents$Hour), 
+                      Freq = n)
+colnames(count_day_hour) <- c("Day","Hour","Count of Accidents")
+ggplot(data=count_day_hour,aes(x=Day,y=Hour))+
+  geom_point(aes(size = `Count of Accidents`))+
+  scale_y_continuous(breaks = count_day_hour$Hour)
+
+ggplot(data=count_day_hour,aes(x=Hour,y=`Count of Accidents`,col=Day))+
+  geom_point(aes(size = `Count of Accidents`))+
+  scale_y_continuous(breaks = count_day_hour$`Count of Accidents`)
+
+#Sankey Diagram District->Unemployment Rate -> Wealth
+#Sankey Diagram District-> Education -> Wealth
+#Sankey Diagram Day-> Accidents -> Hour
+#Terrororial Wealth heatmap on plolygon coord
+#Check for sankey diag of District->Deaths->Wealth
+#Geo Heatmap of airquality and corresponding deaths in Nov 2017
