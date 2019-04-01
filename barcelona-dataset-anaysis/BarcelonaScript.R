@@ -3,14 +3,17 @@ library(ggmap)
 library(geojsonio)
 library(dplyr)
 library(networkD3)
+library(broom)
+library(sp)
+
 LEFT=2.11
 RIGHT=2.22
 TOP=41.45
 BOTTOM=41.35
 ZOOM=15
 MAP_TYPE="toner"
-PATH="~/code/DataVisualization/Assignments/Assignment4"
-#PATH="H:/TCD/Semester 2/DataVisualization/Assignment4/barcelona-dataset-anaysis"
+#PATH="~/code/DataVisualization/Assignments/Assignment4"
+PATH="H:/TCD/Semester 2/DataVisualization/Assignment4/barcelona-dataset-anaysis"
 INFRA_PATH="barcelona-pedestrian-crossing-2017.csv"
 ACCIDENTS="barcelona-accidents-2017.csv"
 WEALTH="barcelona-terretorial-income-2017.csv"
@@ -152,5 +155,26 @@ ggplot(data=district_wealth_unemployment,aes(x=`District Name`,y=`Mean Wealth`,c
 
 #Sankey Diagram Day-> Accidents -> Hour
 #Terrororial Wealth heatmap on plolygon coord
+barcelona_geojson=geojson_read("barcelona-neighborhoods.geojson", what="sp")
+id_lookup=as.data.frame(barcelona_geojson@data)
+id_lookup$id=0:(nrow(id_lookup)-1)
+barcelona_polygon=fortify(barcelona_geojson)
+barcelona_neighborhood_polygon=merge(barcelona_polygon, 
+                                     id_lookup, by.x = "id", by.y = "id")
+barcelona_neighborhood_polygon=merge(barcelona_neighborhood_polygon,
+                                     barcelona_wealth,
+                                     by.x="name", by.y="Neighborhood Name")
+
+barcelona_map+
+  stat_density2d(data=barcelona_neighborhood_polygon, 
+                 mapping=aes(x=long, y=lat, fill=`Index RFD Barcelona = 100`), alpha=0.3, geom="polygon")
+
+barcelona_polygon=tidy(barcelona_geojson)
+ggplot() + 
+  geom_map(data=barcelona_polygon, 
+           map=barcelona_polygon, 
+           aes(map_id=id,x=long, y=lat), fill="grey", color="white", size=0.1) +
+  coord_map() +
+  theme_void()
 #Check for sankey diag of District->Deaths->Wealth
 #Geo Heatmap of airquality and corresponding deaths in Nov 2017
