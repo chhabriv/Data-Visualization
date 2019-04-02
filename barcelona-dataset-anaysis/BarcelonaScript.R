@@ -22,6 +22,9 @@ ACCIDENT_VS_PEDESTRIAN_TITLE="2017 - Pedestrian Accidents vs Pedestrian Crossing
 DISTRICT_PEDESTRIAN_COUNT="2017 - Pedestrian Accidents per District in Barcelona"
 PREDESTRIAN_CAUSE_COUNT="2017 - Pedestrian Accidents Cause in Barcelona"
 INCOME_UNEMPLOYMENT_DISTRICT="2017 - District wise Wealth Vs Unemployment Rate"
+DAY_HOUR_COUNT_1="(1) 2017 - Hourly count of accidents per day of the week"
+DAY_HOUR_COUNT_2="(2) 2017 - Hourly count of accidents per day of the week"
+
 setwd(PATH)
 
 barcelona_coordinates <- c(left = LEFT,
@@ -64,6 +67,8 @@ crossing_plot=barcelona_map+
         axis.text = element_blank(), axis.ticks = element_blank(),
         panel.border = element_blank())
 crossing_plot
+ggsave(filename=paste(ACCIDENT_VS_PEDESTRIAN_TITLE,".jpg",sep=""),plot=last_plot(),
+       device="jpeg",path=PATH,width=12,height = 8)
 
 #getting count of districts
 barcelona_pedestrian_accidents['Name of the district'] =lapply(barcelona_pedestrian_accidents['Name of the district'],factor)
@@ -72,6 +77,8 @@ colnames(count_of_districts) <- c("District","Count of Accidents")
 ggplot(data=count_of_districts, aes(District,`Count of Accidents`)) +
   geom_bar(stat = "identity")+
   ggtitle(DISTRICT_PEDESTRIAN_COUNT)
+ggsave(filename=paste(DISTRICT_PEDESTRIAN_COUNT,".jpg",sep=""),plot=last_plot(),
+       device="jpeg",path=PATH,width=12,height = 7)
 
 #getting cause of accident
 barcelona_pedestrian_accidents['DescriptionofAccident'] = lapply(barcelona_pedestrian_accidents['DescriptionofAccident'],factor)
@@ -80,6 +87,8 @@ colnames(count_of_cause) <- c("Cause of Accident","Count of Accidents")
 ggplot(data=count_of_cause, aes(`Cause of Accident`,`Count of Accidents`)) +
   geom_bar(stat = "identity")+
   ggtitle(PREDESTRIAN_CAUSE_COUNT)
+ggsave(filename=paste(PREDESTRIAN_CAUSE_COUNT,".jpg",sep=""),plot=last_plot(),
+       device="jpeg",path=PATH,width=12,height = 7)
 
 #Day-Hour accident count
 barcelona_pedestrian_accidents['Day'] = lapply(barcelona_pedestrian_accidents['Day'],factor)
@@ -92,14 +101,18 @@ count_day_hour['Hour']=lapply(count_day_hour['Hour'], factor)
 
 ggplot(data=count_day_hour,aes(x=Day,y=Hour))+
   geom_point(aes(size = `Count of Accidents`))+
-  scale_y_continuous(breaks = count_day_hour$Hour)+  
-  ggtitle()
+  scale_y_discrete(breaks = count_day_hour$Hour)+
+  ggtitle(DAY_HOUR_COUNT_1)
+ggsave(filename=paste(DAY_HOUR_COUNT_1,".jpg",sep=""),plot=last_plot(),
+       device="jpeg",path=PATH,width=12,height = 7)
 
 ggplot(data=count_day_hour,aes(x=Hour,y=`Count of Accidents`,col=Day))+
   geom_point(aes(size = `Count of Accidents`))+
   scale_y_continuous(breaks = count_day_hour$`Count of Accidents`)+
-  scale_x_continuous(breaks = count_day_hour$Hour)+
-  ggtitle()
+  scale_x_discrete(breaks = count_day_hour$Hour)+
+  ggtitle(DAY_HOUR_COUNT_2)
+ggsave(filename=paste(DAY_HOUR_COUNT_2,".jpg",sep=""),plot=last_plot(),
+       device="jpeg",path=PATH,width=12,height = 7)
 
 #Day-count-hour sankey
 nodes <- as.data.frame(levels(count_day_hour$Day))
@@ -152,6 +165,8 @@ ggplot(data=district_wealth_unemployment,aes(x=`District Name`,y=`Mean Wealth`,c
                    labels=c("Above Average","Below Average"))+
   ylab("Income Per Captia Index with Average=100")+
   ggtitle(INCOME_UNEMPLOYMENT_DISTRICT)
+ggsave(filename=paste(INCOME_UNEMPLOYMENT_DISTRICT,".jpg",sep=""),plot=last_plot(),
+       device="jpeg",path=PATH,width=12,height = 7)
 
 #Sankey Diagram Day-> Accidents -> Hour
 #Terrororial Wealth heatmap on plolygon coord
