@@ -13,7 +13,7 @@ BOTTOM=41.35
 ZOOM=15
 MAP_TYPE="toner"
 #PATH="~/code/DataVisualization/Assignments/Assignment4"
-PATH="H:/TCD/Semester 2/DataVisualization/Assignment4/barcelona-dataset-anaysis"
+PATH="H:/TCD/Semester 2/DataVisualization/Assignment4/Data-Visualization/barcelona-dataset-anaysis"
 INFRA_PATH="barcelona-pedestrian-crossing-2017.csv"
 ACCIDENTS="barcelona-accidents-2017.csv"
 WEALTH="barcelona-terretorial-income-2017.csv"
@@ -24,6 +24,7 @@ PREDESTRIAN_CAUSE_COUNT="2017 - Pedestrian Accidents Cause in Barcelona"
 INCOME_UNEMPLOYMENT_DISTRICT="2017 - District wise Wealth Vs Unemployment Rate"
 DAY_HOUR_COUNT_1="(1) 2017 - Hourly count of accidents per day of the week"
 DAY_HOUR_COUNT_2="(2) 2017 - Hourly count of accidents per day of the week"
+WEALTH_DISTRIBUTION_HEATMAP="2017 - Wealth Distribution heatmap per Neighborhood in Barcelona"
 
 setwd(PATH)
 
@@ -114,32 +115,6 @@ ggplot(data=count_day_hour,aes(x=Hour,y=`Count of Accidents`,col=Day))+
 ggsave(filename=paste(DAY_HOUR_COUNT_2,".jpg",sep=""),plot=last_plot(),
        device="jpeg",path=PATH,width=12,height = 7)
 
-#Day-count-hour sankey
-nodes <- as.data.frame(levels(count_day_hour$Day))
-nodes$id <- 1:nrow(nodes)
-nodes <- nodes[, c(2,1)]
-names(nodes) <- c("id", "label")
-
-# Edges
-edges <- count_day_hour %>% 
-  left_join(nodes, by=c("Day"="label")) %>%
-  select(-Day) %>%
-  dplyr::rename(Day=id)
-
-edges <- edges %>% 
-  left_join(nodes, by=c("Hour"="label")) %>%
-  select(-Hour) %>%
-  dplyr::rename(Hour=id)
-
-nodes_d3 <- mutate(nodes, id=id-1)
-edges_d3 <- mutate(edges, Day=Day-1, Hour=Hour-1)
-
-# sankeyNetwork - Day Hour
-sankeyNetwork(Links=edges_d3, Nodes=nodes_d3, Source="Day", Target="Hour", 
-              NodeID="label", Value="Count of Accidents", fontSize=16, unit="Count of Accidents")
-
-
-
 #Wealth per district
 barcelona_wealth['District Name'] = lapply(barcelona_wealth['District Name'],factor)
 mean_district_wealth = barcelona_wealth%>% 
@@ -170,10 +145,12 @@ ggsave(filename=paste(INCOME_UNEMPLOYMENT_DISTRICT,".jpg",sep=""),plot=last_plot
 
 #Sankey Diagram Day-> Accidents -> Hour
 #Terrororial Wealth heatmap on plolygon coord
-barcelona_geojson=geojson_read("barcelona-neighborhoods.geojson", what="sp")
+barcelona_geojson=geojson_read("https://cdn.rawgit.com/martgnz/bcn-geodata/master/barris/barris_geo.json", 
+                               what="sp")
 id_lookup=as.data.frame(barcelona_geojson@data)
 id_lookup$id=0:(nrow(id_lookup)-1)
 barcelona_polygon=fortify(barcelona_geojson)
+plot(barcelona_geojson)
 barcelona_neighborhood_polygon=merge(barcelona_polygon, 
                                      id_lookup, by.x = "id", by.y = "id")
 barcelona_neighborhood_polygon=merge(barcelona_neighborhood_polygon,
@@ -182,14 +159,21 @@ barcelona_neighborhood_polygon=merge(barcelona_neighborhood_polygon,
 
 barcelona_map+
   stat_density2d(data=barcelona_neighborhood_polygon, 
-                 mapping=aes(x=long, y=lat, fill=`Index RFD Barcelona = 100`), alpha=0.3, geom="polygon")
+                 mapping=aes(x=long, y=lat, fill=`Index RFD Barcelona = 100`),
+                 alpha=0.3, geom="polygon")
 
-barcelona_polygon=tidy(barcelona_geojson)
-ggplot() + 
-  geom_map(data=barcelona_polygon, 
-           map=barcelona_polygon, 
-           aes(map_id=id,x=long, y=lat), fill="grey", color="white", size=0.1) +
-  coord_map() +
-  theme_void()
+
+barcelona_polygon=tidy(barcelona_geojson,region="C_Barri")
+barcelona_polygon$id=as.numeric(barcelona_polygon$id)
+fortified=barcelona_polygon%>%
+  left_join(.,barcelona_wealth, by=c("id"="Neighborhood Code"))
+
+barcelona_map +
+  geom_polygon(data = fortified, aes(fill = `Index RFD Barcelona = 100`,
+                                     x = long, y = lat, group = group),alpha=0.8) +
+  theme_void() +
+  coord_map()+
+  ggtitle(WEALTH_DISTRIBUTION_HEATMAP)
+
 #Check for sankey diag of District->Deaths->Wealth
 #Geo Heatmap of airquality and corresponding deaths in Nov 2017
